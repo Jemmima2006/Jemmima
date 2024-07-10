@@ -1,0 +1,55 @@
+# Load necessary libraries
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+
+# Read the Excel file
+file_path <- "path/to/Book2.xlsx"
+data <- read_excel(file_path, sheet = "Sheet1")
+
+# Display the first few rows of the data
+head(data)
+
+# Convert order_date to Date type and order_time to POSIXct type
+data$order_date <- as.Date(data$order_date)
+data$order_time <- hms::as_hms(data$order_time)
+
+# Summary of the dataset
+summary(data)
+
+# Find the most popular pizzas by quantity
+popular_pizzas <- data %>%
+  group_by(pizza_name) %>%
+  summarise(total_quantity = sum(quantity)) %>%
+  arrange(desc(total_quantity))
+
+# Plot the top 10 most popular pizzas
+top_10_pizzas <- popular_pizzas %>%
+  top_n(10, total_quantity)
+
+ggplot(top_10_pizzas, aes(x = reorder(pizza_name, total_quantity), y = total_quantity)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Top 10 Most Popular Pizzas", x = "Pizza Name", y = "Total Quantity")
+
+# Analyze sales over time
+sales_over_time <- data %>%
+  group_by(order_date) %>%
+  summarise(daily_sales = sum(total_price))
+
+# Plot sales over time
+ggplot(sales_over_time, aes(x = order_date, y = daily_sales)) +
+  geom_line() +
+  labs(title = "Daily Sales Over Time", x = "Date", y = "Total Sales")
+
+# Analyze sales by pizza category
+sales_by_category <- data %>%
+  group_by(pizza_category) %>%
+  summarise(total_sales = sum(total_price))
+
+# Plot sales by pizza category
+ggplot(sales_by_category, aes(x = reorder(pizza_category, total_sales), y = total_sales, fill = pizza_category)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Sales by Pizza Category", x = "Pizza Category", y = "Total Sales") +
+  theme(legend.position = "none")
